@@ -1,0 +1,84 @@
+---
+title: "Homework 4"
+format:
+  html:
+    embed-resources: true
+editor: visual
+---
+
+Link to Github repository: https://github.com/grobertson881/stats506-homework4
+
+**Problem 1** 
+
+```{r}
+#install.packages("nzelect")
+#library(nzelect)
+#library(tidyverse)
+nzge <- nzelect::nzge
+```
+
+*Part A*
+```{r}
+vote_count <- nzge %>% 
+  select(votes, election_year, voting_type) %>%
+  group_by(election_year, voting_type) %>% 
+  summarize(total_vote_count = sum(votes)) %>% 
+  arrange(total_vote_count)
+
+vote_count
+```
+
+*Part B*
+```{r}
+votes_2014 <- nzge %>% 
+  filter(election_year == 2014, voting_type == "Candidate") %>% 
+  group_by(party) %>% 
+  summarize(party_total_votes = sum(votes)) %>% 
+  ungroup() %>% 
+  mutate(vote_proportion = party_total_votes / sum(party_total_votes) * 100) %>% 
+  select(-party_total_votes) %>% 
+  arrange(desc(vote_proportion))
+  
+votes_2014
+```
+
+*Part C*
+```{r}
+winning_party <- nzge %>% 
+  group_by(election_year, voting_type) %>% 
+  filter(votes == max(votes)) %>% 
+  select(election_year, voting_type, party)
+  
+winning_party
+
+```
+
+**Problem 2**
+```{r}
+tennis <- read_csv("https://raw.githubusercontent.com/JeffSackmann/tennis_atp/refs/heads/master/atp_matches_2019.csv")
+
+```
+
+*Part A*
+```{r}
+library(lubridate)
+
+tourney_by_year <- tennis %>% 
+  mutate(tourney_date = as.Date(as.character(tourney_date), format = "%Y%m%d")) %>% 
+  group_by(tourney_id) %>% 
+  filter(year(tourney_date) == 2019) %>% 
+  summarize(tourney_sum_2019 = n_distinct(tourney_id)) ### NOT WORKING COME BACK TO THIS
+  
+tourney_by_year
+```
+
+
+
+
+
+
+
+
+
+
+
