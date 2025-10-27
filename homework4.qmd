@@ -12,8 +12,8 @@ Link to Github repository: https://github.com/grobertson881/stats506-homework4
 
 ```{r}
 #install.packages("nzelect")
-#library(nzelect)
-#library(tidyverse)
+library(nzelect)
+library(tidyverse)
 nzge <- nzelect::nzge
 ```
 
@@ -50,27 +50,77 @@ winning_party <- nzge %>%
   select(election_year, voting_type, party)
   
 winning_party
-
 ```
 
 **Problem 2**
 ```{r}
 tennis <- read_csv("https://raw.githubusercontent.com/JeffSackmann/tennis_atp/refs/heads/master/atp_matches_2019.csv")
-
 ```
 
 *Part A*
 ```{r}
-library(lubridate)
+tourney_2019 <- tennis %>% 
+  mutate(tourney_date = as.character(tourney_date)) %>% 
+  filter(str_sub(tourney_date, 1, 4) == "2019") %>% 
+  summarise(num_tourneys_2019 = n_distinct(tourney_id))
 
-tourney_by_year <- tennis %>% 
-  mutate(tourney_date = as.Date(as.character(tourney_date), format = "%Y%m%d")) %>% 
-  group_by(tourney_id) %>% 
-  filter(year(tourney_date) == 2019) %>% 
-  summarize(tourney_sum_2019 = n_distinct(tourney_id)) ### NOT WORKING COME BACK TO THIS
-  
-tourney_by_year
+tourney_2019
 ```
+There were 125 tournaments in 2019. 
+
+*Part B*
+```{r}
+
+```
+
+Answer: 
+
+*Part C*
+```{r}
+
+```
+
+Answer:
+
+*Part D*
+```{r}
+
+```
+
+Answer: 
+
+**Problem 3**
+```{r}
+covid <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/heads/master/rolling-averages/us-states.csv")
+```
+
+*Part A*
+```{r}
+michigan_cases <- covid %>% 
+  filter(state == "Michigan")
+
+# add find peaks and add to graph
+
+ggplot(michigan_cases, aes(x = date, y = cases_avg)) + 
+  geom_line(linewidth = 1)
+
+```
+
+Answer:
+
+*Part B*
+```{r}
+
+```
+
+Answer: 
+
+*Part C*
+```{r}
+
+```
+
+Answer: 
 
 
 
