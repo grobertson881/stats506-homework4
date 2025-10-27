@@ -70,24 +70,60 @@ There were 125 tournaments in 2019.
 
 *Part B*
 ```{r}
+# winner of tourney is winner of final round
+player_wins <- tennis %>% 
+  filter(round == "F") %>% 
+  group_by(winner_name) %>% 
+  summarize(win_count = n()) %>% 
+  arrange(desc(win_count))
 
+player_wins
 ```
 
-Answer: 
+Yes, there are 12 players who have won more than one tournament. 
+Dominic Thiem and Novak Djokovic have won the most tournaments with 5 wins. 
 
 *Part C*
 ```{r}
+ace_data <- tennis %>%
+  select(w_ace, l_ace) %>%
+  pivot_longer(cols = c(w_ace, l_ace),
+               names_to = "result", values_to = "aces") %>%
+  mutate(result = if_else(result == "w_ace", "W", "L"))
+
+library(infer)
+
+win_ace_hypothesis <- ace_data %>%
+  t_test(aces ~ result, alternative = "greater")
+
+win_ace_hypothesis
 
 ```
 
-Answer:
+There is no evidence that winners have more aces than the losers. The p-value of 1 shows there is no statistical proof. 
 
 *Part D*
 ```{r}
+match_data <- tennis %>%
+  select(winner_name, loser_name) %>%
+  pivot_longer(cols = c(winner_name, loser_name),
+               names_to = "result", values_to = "player_name") %>%
+  mutate(win = if_else(result == "winner_name", 1, 0))
 
+winning_rate <- match_data %>% 
+  group_by(player_name) %>% 
+  summarize(
+    matches_played = n(),
+    wins = sum(win),
+    winning_rate = wins/matches_played
+  ) %>% 
+  filter(matches_played >= 5) %>% 
+  arrange(desc(winning_rate))
+
+winning_rate
 ```
 
-Answer: 
+The player with the highest winning rate is Rafael Nadal with 86.96% of his games being wins. 
 
 **Problem 3**
 ```{r}
@@ -96,13 +132,15 @@ covid <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/
 
 *Part A*
 ```{r}
-michigan_cases <- covid %>% 
-  filter(state == "Michigan")
+cases_total <- covid %>% 
+  group_by(date) %>% 
+  summarize(new_cases = sum(cases, na.rm = TRUE)) %>% 
+  arrange(date)
 
 # add find peaks and add to graph
 
-ggplot(michigan_cases, aes(x = date, y = cases_avg)) + 
-  geom_line(linewidth = 1)
+ggplot(cases_total, aes(x = date, y = new_cases)) + 
+  geom_line(linewidth = 0.3)
 
 ```
 
