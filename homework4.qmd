@@ -127,6 +127,8 @@ The player with the highest winning rate is Rafael Nadal with 86.96% of his game
 
 **Problem 3**
 ```{r}
+library(ggplot2)
+library(tidyverse)
 covid <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/heads/master/rolling-averages/us-states.csv")
 ```
 
@@ -135,23 +137,62 @@ covid <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/
 cases_total <- covid %>% 
   group_by(date) %>% 
   summarize(new_cases = sum(cases, na.rm = TRUE)) %>% 
+  mutate(peak = ifelse(new_cases > 1.5*mean(new_cases, na.rm = TRUE), 1, 0)) %>% 
   arrange(date)
 
-# add find peaks and add to graph
+# peaks defined as 1.5x larger than the average
 
-ggplot(cases_total, aes(x = date, y = new_cases)) + 
-  geom_line(linewidth = 0.3)
-
+ggplot(cases_total, aes(x = date, y = new_cases, color = factor(peak))) + 
+  geom_point(size = 0.7) + 
+  scale_color_manual(
+    values = c("0" = "black", "1" = "red"), 
+    name = "Peak Status", 
+    labels = c("Not a Peak", "Peak")
+  ) +
+  labs(
+    x = "Date",
+    y = "Average New Cases",
+    title = "COVID-19 Average Daily New Cases with Peaks Highlighted",
+    subtitle = "Peaks defined as > 1.5x mean new cases",
+    caption = "Source: NYT COVID Data"
+  )
 ```
 
-Answer:
+There was a major spike in new cases around the start of 2022. There were four minor spikes in the beginning of 2021, around September 2021, around July of 2022, and at the beginning of 2023. As seen in the plot, these spikes are represented in red and are defined as being greater than 1.5x the average number of new cases for all the data.  
 
 *Part B*
 ```{r}
+### This isn't working, may have to reformat
+
+data_by_state <- covid %>%
+  group_by(state) %>%
+  summarize(avg_new_case_rate = mean(cases_avg_per_100k, na.rm = TRUE)) %>%
+  arrange(desc(avg_new_case_rate))
+
+highest_state_data <- covid %>% 
+  filter(state == data_by_state$state[1])
+
+lowest_state_data <- covid %>% 
+  filter(state == data_by_state$state[nrow(data_by_state)])
+
+ggplot(highest_state_data, aes(x = date, y = cases_avg_per_100k)) + 
+  geom_line(color = "American Samoa") +
+  geom_line(data = lowest_state_data, color = "Maryland") +
+  scale_color_manual(
+    name = "State",
+    values = c("Maryland" = "blue", "American Samoa" = "red")
+  ) +
+  labs(
+    x = "Date",
+    y = "Average New Cases per 100k People",
+    title = "COVID-19 Average Daily New Cases by Population",
+    subtitle = "Only States with Highest and Lowest Rates Shown",
+    caption = "Source: NYT COVID Data"
+  )
 
 ```
 
-Answer: 
+The state with the highest average rates per 100k is American Somoa and the lowest averages rates per 100k is Maryland. In the graph, American Samoa is represented in red and Maryland is represented in blue. The dates that American Samoa tracked their COVID-19 cases starts much later than Maryland so the trends can't be tracked before 2022. After that though, we can see the trends differ greatly where as the cases are lowering after 2022 for Maryland, there are significant spikes in cases for American Samoa. This may be due to differences in vaccine distribution at this time in the two places. 
 
 *Part C*
 ```{r}
