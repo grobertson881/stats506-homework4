@@ -8,7 +8,7 @@ editor: visual
 
 Link to Github repository: https://github.com/grobertson881/stats506-homework4
 
-**Problem 1** 
+**Problem 1**
 
 ```{r}
 #install.packages("nzelect")
@@ -18,6 +18,7 @@ nzge <- nzelect::nzge
 ```
 
 *Part A*
+
 ```{r}
 vote_count <- nzge %>% 
   select(votes, election_year, voting_type) %>%
@@ -29,6 +30,7 @@ vote_count
 ```
 
 *Part B*
+
 ```{r}
 votes_2014 <- nzge %>% 
   filter(election_year == 2014, voting_type == "Candidate") %>% 
@@ -43,6 +45,7 @@ votes_2014
 ```
 
 *Part C*
+
 ```{r}
 winning_party <- nzge %>% 
   group_by(election_year, voting_type) %>% 
@@ -53,11 +56,13 @@ winning_party
 ```
 
 **Problem 2**
+
 ```{r}
 tennis <- read_csv("https://raw.githubusercontent.com/JeffSackmann/tennis_atp/refs/heads/master/atp_matches_2019.csv")
 ```
 
 *Part A*
+
 ```{r}
 tourney_2019 <- tennis %>% 
   mutate(tourney_date = as.character(tourney_date)) %>% 
@@ -66,9 +71,11 @@ tourney_2019 <- tennis %>%
 
 tourney_2019
 ```
-There were 125 tournaments in 2019. 
+
+There were 125 tournaments in 2019.
 
 *Part B*
+
 ```{r}
 # winner of tourney is winner of final round
 player_wins <- tennis %>% 
@@ -80,10 +87,10 @@ player_wins <- tennis %>%
 player_wins
 ```
 
-Yes, there are 12 players who have won more than one tournament. 
-Dominic Thiem and Novak Djokovic have won the most tournaments with 5 wins. 
+Yes, there are 12 players who have won more than one tournament. Dominic Thiem and Novak Djokovic have won the most tournaments with 5 wins.
 
 *Part C*
+
 ```{r}
 ace_data <- tennis %>%
   select(w_ace, l_ace) %>%
@@ -100,9 +107,10 @@ win_ace_hypothesis
 
 ```
 
-There is no evidence that winners have more aces than the losers. The p-value of 1 shows there is no statistical proof. 
+There is no evidence that winners have more aces than the losers. The p-value of 1 shows there is no statistical proof.
 
 *Part D*
+
 ```{r}
 match_data <- tennis %>%
   select(winner_name, loser_name) %>%
@@ -123,16 +131,19 @@ winning_rate <- match_data %>%
 winning_rate
 ```
 
-The player with the highest winning rate is Rafael Nadal with 86.96% of his games being wins. 
+The player with the highest winning rate is Rafael Nadal with 86.96% of his games being wins.
 
 **Problem 3**
+
 ```{r}
 library(ggplot2)
 library(tidyverse)
+library(lubridate)
 covid <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/refs/heads/master/rolling-averages/us-states.csv")
 ```
 
 *Part A*
+
 ```{r}
 cases_total <- covid %>% 
   group_by(date) %>% 
@@ -158,56 +169,61 @@ ggplot(cases_total, aes(x = date, y = new_cases, color = factor(peak))) +
   )
 ```
 
-There was a major spike in new cases around the start of 2022. There were four minor spikes in the beginning of 2021, around September 2021, around July of 2022, and at the beginning of 2023. As seen in the plot, these spikes are represented in red and are defined as being greater than 1.5x the average number of new cases for all the data.  
+There was a major spike in new cases around the start of 2022. There were four minor spikes in the beginning of 2021, around September 2021, around July of 2022, and at the beginning of 2023. As seen in the plot, these spikes are represented in red and are defined as being greater than 1.5x the average number of new cases for all the data.
 
 *Part B*
-```{r}
-### This isn't working, may have to reformat
 
+```{r}
 data_by_state <- covid %>%
   group_by(state) %>%
   summarize(avg_new_case_rate = mean(cases_avg_per_100k, na.rm = TRUE)) %>%
   arrange(desc(avg_new_case_rate))
 
-highest_state_data <- covid %>% 
-  filter(state == data_by_state$state[1])
+highest_state <- data_by_state$state[1]
+lowest_state  <- data_by_state$state[nrow(data_by_state)]
 
-lowest_state_data <- covid %>% 
-  filter(state == data_by_state$state[nrow(data_by_state)])
+high_low_state_data <- covid %>% 
+  filter(state == highest_state | state == lowest_state)
 
-ggplot(highest_state_data, aes(x = date, y = cases_avg_per_100k)) + 
-  geom_line(color = "American Samoa") +
-  geom_line(data = lowest_state_data, color = "Maryland") +
-  scale_color_manual(
-    name = "State",
-    values = c("Maryland" = "blue", "American Samoa" = "red")
-  ) +
+ggplot(high_low_state_data, aes(x = date, y = cases_avg_per_100k, color = state)) +
+  geom_line(size = 1.1) +
+  scale_color_manual(name = "State", values = setNames(c("red", "blue"), 
+                                                       c(highest_state, lowest_state))) +
   labs(
     x = "Date",
     y = "Average New Cases per 100k People",
-    title = "COVID-19 Average Daily New Cases by Population",
-    subtitle = "Only States with Highest and Lowest Rates Shown",
+    title = "COVID-19 Average Daily New Cases (per 100k)",
+    subtitle = "Highest vs Lowest states",
+    caption = "Source: NYT COVID data"
+  )
+```
+
+The state with the highest average rates per 100k is American Somoa and the lowest averages rates per 100k is Maryland. In the graph, American Samoa is represented in red and Maryland is represented in blue. The dates that American Samoa tracked their COVID-19 cases starts much later than Maryland so the trends can't be tracked before 2022. After that though, we can see the trends differ greatly where as the cases are lowering after 2022 for Maryland, there are significant spikes in cases for American Samoa. This may be due to differences in vaccine distribution at this time in the two places.
+
+*Part C*
+
+```{r}
+# When each state reached > 100 average cases per day
+library(ggrepel)
+
+early_covid_data <- covid %>% 
+  filter(cases_avg > 100) %>% 
+  group_by(state) %>% 
+  slice_min(order_by = date, n = 1) %>%
+  ungroup() %>%
+  arrange(date) %>% 
+  mutate(state = reorder(state, date)) %>% 
+  slice_head(n = 20)
+
+ggplot(data = early_covid_data, aes(x = date, y = state)) +
+  geom_point(size = 3) +
+  labs(
+    title = "Date when States Reached over 100 Average New Cases",
+    x = "Date",
+    y = "State",
     caption = "Source: NYT COVID Data"
   )
 
 ```
 
-The state with the highest average rates per 100k is American Somoa and the lowest averages rates per 100k is Maryland. In the graph, American Samoa is represented in red and Maryland is represented in blue. The dates that American Samoa tracked their COVID-19 cases starts much later than Maryland so the trends can't be tracked before 2022. After that though, we can see the trends differ greatly where as the cases are lowering after 2022 for Maryland, there are significant spikes in cases for American Samoa. This may be due to differences in vaccine distribution at this time in the two places. 
-
-*Part C*
-```{r}
-
-```
-
-Answer: 
-
-
-
-
-
-
-
-
-
-
-
+The first five states to experience COVID early on were New York, California, New Jersey, Washington and Michigan. These states were the first states to have an average number of new cases greater than 100. New York reached this on March 16, 2020. California, New Jersey, and Washington reached this on March 19, 2020. Michigan reached this on March 21, 2020.
